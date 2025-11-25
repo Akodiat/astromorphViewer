@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <title>View FITS files</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/vega@6.2.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-lite@6.4.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-embed@7.0.2"></script>
+  </head>
+  <body>
+
+    <main class="container">
+      <h1>FITS Viewer</h1>
+      <article>
+        <label>
+          Input CSV file
+          <input type="file" id="csvInput">
+          <progress id="umapProgress" hidden/>
+        </label>
+
+        <label>
+          Input FITS files
+          <input type="file" id="fitsInput" multiple="multiple">
+        </label>
+      </article>
+
+      <article>
+        <div id="vis"></div>
+        <canvas id="imageCanvas" style="min-height: 300px;"></canvas>
+        <p id="textData"></p>
+      </article>
+
+    </main>
+
+    <script src="lib/fits.js"></script>
+    <script src="lib/papaparse.min.js"></script>
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>
