@@ -1,14 +1,19 @@
-import {Lut} from "./lut.js";
 import {UMAP} from "../lib/umap.js";
+import {aleaPRNG} from "../lib/aleaPRNG-1.1.min.js";
 import {loadCSVFile} from "./loadData.js";
 import {scatterPlot} from "./plot.js";
-import { FitsManager } from "./fitsManager.js";
+import {FitsManager} from "./fitsManager.js";
 
 init();
 
 function init() {
     const fitsInput = document.getElementById("fitsInput");
     const csvInput = document.getElementById("csvInput");
+    const seedInput = document.getElementById("seed");
+
+    if (seedInput.value == "") {
+        seedInput.value = Math.round(Math.random() * 1000);
+    }
 
     const fitsManager = new FitsManager();
 
@@ -17,11 +22,11 @@ function init() {
     });
 
     csvInput.addEventListener("change", () =>
-        handleCSVData(csvInput.files[0], fitsManager)
+        handleCSVData(csvInput.files[0], fitsManager, seedInput.value)
     );
 }
 
-async function handleCSVData(file, fitsManager) {
+async function handleCSVData(file, fitsManager, seed) {
     const progress = document.getElementById("umapProgress");
     progress.hidden = false;
 
@@ -30,10 +35,8 @@ async function handleCSVData(file, fitsManager) {
 
     const data = results.map(row => row.emb_dim);
 
-    console.log("data");
-    console.log(data);
-
-    const umap = new UMAP();
+    const prng = aleaPRNG(seed);
+    const umap = new UMAP({random: prng});
 
     const nEpochs = umap.initializeFit(data);
     progress.max = nEpochs;
@@ -49,8 +52,4 @@ async function handleCSVData(file, fitsManager) {
     }
 
     scatterPlot(results, fitsManager);
-
-    console.log("embedding");
-    console.log(embedding);
-
 }

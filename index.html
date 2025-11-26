@@ -16,22 +16,31 @@
     <main class="container">
       <h1>Astromorph viewer</h1>
       <article>
-        <label>
-          Input CSV file
-          <input type="file" id="csvInput" accept=".csv" aria-describedby="csvInputHelper">
-          <small id="csvInputHelper">
-            Input a CSV file with cluster, filepath, and embedding columns
-          </small>
-          <progress id="umapProgress" hidden/>
-        </label>
+        <div class="grid">
+          <label>
+            Random seed
+            <input type="number" id="seed" aria-label="Random seed">
+            <small id="seed">
+              Input a seed to get reproducable UMAP results
+            </small>
+          </label>
+          <label>
+            Input CSV file
+            <input type="file" id="csvInput" accept=".csv" aria-describedby="csvInputHelper">
+            <small id="csvInputHelper">
+              Input a CSV file with cluster, filepath, and embedding columns
+            </small>
+            <progress id="umapProgress" hidden/>
+          </label>
 
-        <label>
-          Input FITS files
-          <input type="file" id="fitsInput" multiple="multiple" accept=".fits" aria-describedby="fitsInputHelper">
-          <small id="fitsInputHelper">
-            Select all fits files referenced by the csv file
-          </small>
-        </label>
+          <label>
+            Input FITS files
+            <input type="file" id="fitsInput" multiple="multiple" accept=".fits" aria-describedby="fitsInputHelper">
+            <small id="fitsInputHelper">
+              Select all fits files referenced by the csv file
+            </small>
+          </label>
+        </div>
       </article>
 
       <article>
