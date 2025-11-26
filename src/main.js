@@ -19,6 +19,7 @@ function init() {
 
     fitsInput.addEventListener("change", () => {
         fitsManager.readFiles(fitsInput.files);
+        document.getElementById("mapContainer").hidden = false;
     });
 
     csvInput.addEventListener("change", () =>
@@ -52,4 +53,12 @@ async function handleCSVData(file, fitsManager, seed) {
     }
 
     scatterPlot(results, fitsManager);
+
+    document.getElementById("mapContainer").hidden = fitsManager.imageData.size <= 0;
+    const mapButton = document.getElementById("mapButton");
+    const scalingFactor = parseFloat(document.getElementById("mapScalingFactor").value);
+    mapButton.onclick = () => {
+        fitsManager.drawFullMap(results, scalingFactor);
+        mapButton.hidden = true;
+    }
 }

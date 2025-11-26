@@ -49,6 +49,19 @@
         <p id="textData"></p>
       </article>
 
+      <article id="mapContainer" hidden>
+        <label>
+          Scaling factor
+          <input type="number" id="mapScalingFactor" aria-label="Scaling factor" value="100" aria-describedby="mapScalingFactorHelper" style="max-width: 10em;">
+          <small id="mapScalingFactorHelper">
+            Increase to place images further apart
+          </small>
+        </label>
+        <button id="mapButton">Draw images on map</button>
+        <canvas id="mapCanvas" style="max-width: 100%;"></canvas>
+        <progress id="mapProgress" hidden/>
+      </article>
+
     </main>
 
     <script src="lib/fits.js"></script>
