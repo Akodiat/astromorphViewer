@@ -13,7 +13,6 @@ function init() {
     const fitsManager = new FitsManager();
 
     fitsInput.addEventListener("change", () => {
-        //handleImageFile(fitsInput.files[0]);
         fitsManager.readFiles(fitsInput.files);
     });
 
@@ -23,6 +22,9 @@ function init() {
 }
 
 async function handleCSVData(file, fitsManager) {
+    const progress = document.getElementById("umapProgress");
+    progress.hidden = false;
+
     const results = await loadCSVFile(file);
     console.log(results);
 
@@ -34,8 +36,6 @@ async function handleCSVData(file, fitsManager) {
     const umap = new UMAP();
 
     const nEpochs = umap.initializeFit(data);
-    const progress = document.getElementById("umapProgress");
-    progress.hidden = false;
     progress.max = nEpochs;
     const embedding = await umap.fitAsync(data, epochNumber => {
         // check progress and give user feedback, or return `false` to stop
