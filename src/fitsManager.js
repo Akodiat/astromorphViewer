@@ -37,6 +37,7 @@ class FitsData {
 class FitsManager {
     constructor() {
         this.imageData = new Map();
+        this.currentDrawers = new Set();
     }
 
     readFiles(files) {
@@ -76,6 +77,11 @@ class FitsManager {
     async drawImage(fileName, colorScheme="viridis") {
         const data = this.imageData.get(fileName);
 
+        if (data === undefined) {
+            console.warn(`Missing fits file: ${fileName}`);
+            return;
+        }
+
         // Get color data
         const colorData = await this.colorFromData(data, colorScheme);
 
@@ -94,6 +100,8 @@ class FitsManager {
     }
 
     async drawFullMap(umapResults, scalingFactor=100, colorScheme="viridis") {
+        const drawStartTime = new Date();
+        this.currentDrawers.add(drawStartTime);
         const progress = document.getElementById("mapProgress");
         progress.max = umapResults.length;
         progress.hidden = false;
@@ -125,40 +133,68 @@ class FitsManager {
             ).map(({ value }) => value);
 
         for (let i=0; i<shuffledResult.length; i++) {
+
+            // Check if newer drawing runs have started
+            // after this one. If so, abort.
+            if (this.currentDrawers.size > 1) {
+                let deprecated;
+                this.currentDrawers.forEach(t=>{
+                    deprecated = t > drawStartTime
+                });
+                if (deprecated) {
+                    break;
+                }
+            }
             progress.value = i;
             const r = shuffledResult[i];
 
-            if (r.filepath === undefined) {
-                console.log(`Data not found: ${r}`);
-                continue;
-            }
             const fileName = r.filepath.split("/").slice(-1)[0];
             const data = this.imageData.get(fileName);
 
-            // Get color data
-            const colorData = await this.colorFromData(data, colorScheme, true);
+            if (data === undefined) {
+                console.warn(`Missing fits file: ${fileName}`);
+                continue;
+            }
 
-            const tmpCanvas = document.createElement("canvas");
-            tmpCanvas.width = data.width;
-            tmpCanvas.height = data.height
-            var ctx2 = tmpCanvas.getContext("2d");
+            const draw = colorData => {
+                const tmpCanvas = document.createElement("canvas");
+                tmpCanvas.width = data.width;
+                tmpCanvas.height = data.height
+                var ctx2 = tmpCanvas.getContext("2d");
 
-            const imgData = new ImageData(
-                colorData, data.width, data.height
-            );
+                const imgData = new ImageData(
+                    colorData, data.width, data.height
+                );
 
-            ctx2.putImageData(
-                imgData, 0, 0
-            );
+                ctx2.putImageData(
+                    imgData, 0, 0
+                );
 
-            // draw the temporary gradient canvas on the visible canvas
-            ctx.drawImage(
-                tmpCanvas,
-                (r.umap_x - xmin) * scalingFactor,
-                height - ((r.umap_y - ymin) * scalingFactor)
-            );
+                // draw the temporary gradient canvas on the visible canvas
+                ctx.drawImage(
+                    tmpCanvas,
+                    (r.umap_x - xmin) * scalingFactor,
+                    height - ((r.umap_y - ymin) * scalingFactor)
+                );
+            };
+
+            // Get color data, then draw. Do at most 10 parallel fits loads,
+            // to avoid locking the browser
+            if (i % 10 === 0) {
+                // Wait for data to load, then draw
+                const colorData = await this.colorFromData(
+                    data, colorScheme, true
+                );
+                draw(colorData);
+            } else {
+                // Draw when data has loaded (asynchronously)
+                this.colorFromData(
+                    data, colorScheme, true
+                ).then(colorData => draw(colorData));
+            }
         }
         progress.hidden = true;
+        this.currentDrawers.delete(drawStartTime);
     }
 }
 

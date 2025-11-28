@@ -13,6 +13,9 @@ function parseCSV(csvStr, sep=",", textHeaders=["object", "filepath"]) {
     const header = lines[0].split(sep);
     lines = lines.slice(1);
 
+    // Remove empty lines
+    lines = lines.filter(l => l !== "");
+
     return lines.map(line => {
         const values = line.split(sep);
         const e = {emb_dim: []};

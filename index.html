@@ -43,23 +43,26 @@
         </div>
       </article>
 
-      <article>
+      <article id="interactiveUMAPContainer" hidden>
+        <h2>Interactive UMAP</h2>
+        <p>Click on a point to view image data</p>
         <div id="vis"></div>
         <canvas id="imageCanvas" style="min-height: 300px;"></canvas>
         <p id="textData"></p>
       </article>
 
       <article id="mapContainer" hidden>
-        <label>
-          Scaling factor
-          <input type="number" id="mapScalingFactor" aria-label="Scaling factor" value="100" aria-describedby="mapScalingFactorHelper" style="max-width: 10em;">
-          <small id="mapScalingFactorHelper">
-            Increase to place images further apart
-          </small>
-        </label>
-        <button id="mapButton">Draw images on map</button>
+        <h2>Draw fits data on UMAP</h2>
+        <progress id="mapProgress" hidden></progress>
+
+        <div class="container">
+          <label>
+            Scaling factor
+            <input type="number" id="mapScalingFactor" aria-label="Scaling factor" value="100" aria-describedby="mapScalingFactorHelper" title="Increase to place images further apart" style="max-width: 10em;">
+            <button id="mapButton">Draw</button>
+          </label>
+        </div>
         <canvas id="mapCanvas" style="max-width: 100%;"></canvas>
-        <progress id="mapProgress" hidden/>
       </article>
 
     </main>

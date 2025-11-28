@@ -52,13 +52,16 @@ async function handleCSVData(file, fitsManager, seed) {
         results[i].umap_y = embedding[i][1];
     }
 
+    document.getElementById("interactiveUMAPContainer").hidden = false;
+
     scatterPlot(results, fitsManager);
 
     document.getElementById("mapContainer").hidden = fitsManager.imageData.size <= 0;
     const mapButton = document.getElementById("mapButton");
-    const scalingFactor = parseFloat(document.getElementById("mapScalingFactor").value);
+    mapButton.innerHTML = "Redraw";
+    const scalingFactorInput = document.getElementById("mapScalingFactor");
     mapButton.onclick = () => {
+        const scalingFactor = parseFloat(scalingFactorInput.value);
         fitsManager.drawFullMap(results, scalingFactor);
-        mapButton.hidden = true;
     }
 }
