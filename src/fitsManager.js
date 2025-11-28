@@ -1,4 +1,5 @@
 import {Lut} from "./lut.js";
+import {displayImageAndData} from "./utils.js";
 
 class FitsData {
     constructor(file) {
@@ -195,6 +196,39 @@ class FitsManager {
         }
         progress.hidden = true;
         this.currentDrawers.delete(drawStartTime);
+
+        const cutoff = (xmax - xmin) / 100;
+        canvas.onclick = event => {
+            //const rect = canvas.getBoundingClientRect();
+            const xScale =  canvas.width / canvas.clientWidth;
+            const yScale =  canvas.height / canvas.clientHeight;
+            const point = {
+                x: event.offsetX * xScale,//event.clientX - rect.left,
+                y: event.offsetY * yScale//event.clientY - rect.top
+            };
+
+            console.log(`canvas_x: ${point.x}, canvas_y: ${point.y}`);
+
+            const x = (point.x / scalingFactor) + xmin;
+            const y = ((height - point.y) / scalingFactor) + ymin
+
+            console.log(`x: ${x}, y: ${y}`);
+
+            // Find closest datapoint (within cutoff)
+            let minDistSq = cutoff;
+            let closest;
+            for (const r of umapResults) {
+                const distSq = (x - r.umap_x)**2 + (y - r.umap_y)**2;
+                if (distSq < minDistSq) {
+                    minDistSq = distSq;
+                    closest = r;
+                }
+            }
+
+            if (closest !== undefined) {
+                displayImageAndData(closest, this);
+            }
+        };
     }
 }
 
