@@ -3,8 +3,12 @@ import {aleaPRNG} from "../lib/aleaPRNG-1.1.min.js";
 import {loadCSVFile} from "./loadData.js";
 import {scatterPlot} from "./plot.js";
 import {FitsManager} from "./fitsManager.js";
+import { SpriteView } from "./sprites.js";
 
 init();
+
+let csvLoaded = false;
+let fitsLoaded = false;
 
 function init() {
     const fitsInput = document.getElementById("fitsInput");
@@ -19,11 +23,17 @@ function init() {
 
     fitsInput.addEventListener("change", () => {
         fitsManager.readFiles(fitsInput.files);
-        document.getElementById("mapContainer").hidden = false;
+        fitsLoaded = true;
+        // Display map container when all data is loaded
+        document.getElementById("mapContainer").hidden = !csvLoaded;
     });
 
     csvInput.addEventListener("change", () =>
-        handleCSVData(csvInput.files[0], fitsManager, seedInput.value)
+        handleCSVData(csvInput.files[0], fitsManager, seedInput.value).then(() => {
+            csvLoaded = true;
+            // Display map container when all data is loaded
+            document.getElementById("mapContainer").hidden = !fitsLoaded;
+        })
     );
 }
 
@@ -56,12 +66,14 @@ async function handleCSVData(file, fitsManager, seed) {
 
     scatterPlot(results, fitsManager);
 
-    document.getElementById("mapContainer").hidden = fitsManager.imageData.size <= 0;
     const mapButton = document.getElementById("mapButton");
-    mapButton.innerHTML = "Redraw";
     const scalingFactorInput = document.getElementById("mapScalingFactor");
     mapButton.onclick = () => {
+        mapButton.hidden = true;
         const scalingFactor = parseFloat(scalingFactorInput.value);
-        fitsManager.drawFullMap(results, scalingFactor);
+        //fitsManager.drawFullMap(results, scalingFactor);
+
+        const spriteCanvas = document.getElementById("spriteCanvas");
+        const spriteView = new SpriteView(spriteCanvas, results, fitsManager);
     }
 }
