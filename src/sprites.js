@@ -2,7 +2,6 @@ import * as THREE from "three";
 import {OrbitControls} from "three/addons/controls/OrbitControls.js";
 
 import {displayImageAndData} from "./utils.js";
-import {getClosestOpaque} from "./utils.js";
 
 // Initialise pointer vector once and reuse
 const pointer = new THREE.Vector2();
@@ -54,6 +53,13 @@ class SpriteView {
 
         this.controls = new OrbitControls(this.camera, canvas);
         this.controls.enableRotate = false;
+        this.controls.mouseButtons = {
+            LEFT: THREE.MOUSE.PAN
+        };
+        this.controls.touches = {
+            ONE: THREE.TOUCH.PAN,
+	        TWO: THREE.TOUCH.DOLLY_PAN
+        }
 
         // Render whenever camera is moved
         this.controls.addEventListener("change", ()=>this.render());

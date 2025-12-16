@@ -3,7 +3,7 @@ import {aleaPRNG} from "../lib/aleaPRNG-1.1.min.js";
 import {loadCSVFile} from "./loadData.js";
 import {scatterPlot} from "./plot.js";
 import {FitsManager} from "./fitsManager.js";
-import { SpriteView } from "./sprites.js";
+import {SpriteView} from "./sprites.js";
 
 init();
 
