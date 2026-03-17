@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import {OrbitControls} from "three/addons/controls/OrbitControls.js";
-
 import {displayImageAndData} from "./utils.js";
+import {colorClasses} from "./lut.js";
 
 // Initialise pointer vector once and reuse
 const pointer = new THREE.Vector2();
@@ -9,13 +9,20 @@ const pointer = new THREE.Vector2();
 // Initialise raycaster once and reuse
 const raycaster = new THREE.Raycaster();
 
+// Load a default map
+const defaultMap = new THREE.TextureLoader().load(
+    "resources/placeholderSprite.png",
+    texture => texture.colorSpace = THREE.SRGBColorSpace
+);
+
 class SpriteView {
     constructor(canvas, umapResults, fitsManager) {
         this.fitsManager = fitsManager;
+        this.umapResults = umapResults;
 
         this.canvas = canvas;
-        this.canvas.width = this.canvas.parentElement.clientWidth;
-        this.canvas.height = 1000;
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
         //this.camera = new THREE.PerspectiveCamera(75, canvas.width / canvas.height, 0.11, 20);
         this.camera = new THREE.OrthographicCamera(
             canvas.width / - 2,
@@ -52,6 +59,7 @@ class SpriteView {
         this.scene = new THREE.Scene();
 
         this.controls = new OrbitControls(this.camera, canvas);
+
         this.controls.enableRotate = false;
         this.controls.mouseButtons = {
             LEFT: THREE.MOUSE.PAN
@@ -77,7 +85,8 @@ class SpriteView {
         //
 
         window.addEventListener('resize', ()=> {
-            this.canvas.width = this.canvas.parentElement.clientWidth;
+            this.canvas.width = window.innerWidth;
+            this.canvas.height = window.innerHeight;
             this.camera.aspect = this.canvas.width / this.canvas.height;
             this.camera.updateProjectionMatrix();
             this.renderer.setSize(this.canvas.width, this.canvas.height);
@@ -86,80 +95,89 @@ class SpriteView {
 
         canvas.addEventListener("click", event => this.onClick(event));
 
-        this.spritesFromData(umapResults, fitsManager).then(()=>this.render());
+        this.initSpritesFromUmap();
 
         const mapScalingFactor = document.getElementById("mapScalingFactor");
 
         mapScalingFactor.addEventListener("change", () => {
             for (const s of this.sprites.children) {
-                s.material.size = s.material.canvasSize * parseFloat(mapScalingFactor.value);
+                if (s.material.map !== defaultMap) {
+                    s.material.size = s.material.canvasSize * parseFloat(mapScalingFactor.value);
+                }
             }
             this.render();
         });
     }
 
-    async spritesFromData(umapResults, fitsManager) {
-        const progress = document.getElementById("mapProgress");
-        progress.max = umapResults.length;
-        progress.hidden = false;
-
+    initSpritesFromUmap() {
         this.sprites = new THREE.Group();
         this.scene.add(this.sprites);
 
-        for (let i=0; i<umapResults.length; i++) {
-            progress.value = i;
-            const r = umapResults[i];
+        const colors = new Map();
+        [...new Set(this.umapResults.map(v=>v.cluster))].forEach((v, i) => {
+            // Clusters seem to be integers from 0-n, but don't assume
+            colors.set(v, colorClasses[i]);
+        });
+
+        for (let i=0; i<this.umapResults.length; i++) {
+            const r = this.umapResults[i];
             const geometry = new THREE.BufferGeometry();
             const vertices = [];
             vertices.push(
                 r.umap_x,
                 r.umap_y,
-                0
+                r.umap_z ?? 0
             );
             geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
 
-            const fileName = r.filepath.split("/").slice(-1)[0];
-            const data = fitsManager.imageData.get(fileName);
+            const material = new THREE.PointsMaterial({
+                size: 5,
+                color: colors.get(r.cluster),
+                blending: THREE.NormalBlending,
+                map: defaultMap,
+                depthTest: false,
+                transparent: true,
+                sizeAttenuation: false
+            });
 
+            // Save cluster color separately
+            // (to not be overwritten by selection)
+            material.clusterColor = material.color.clone();
+
+            const particle = new THREE.Points(geometry, material);
+
+            this.particleMap.set(particle, r);
+
+            this.sprites.add(particle);
+        }
+
+        this.render();
+    }
+
+    async spriteImagesFromFits() {
+        const colorScale = "grayscale";
+        const progress = document.getElementById("mapProgress");
+        progress.max = this.umapResults.length;
+        progress.hidden = false;
+
+        for (let i=0; i<this.umapResults.length; i++) {
+            progress.value = i;
+
+            const r = this.umapResults[i];
+            const fileName = r.filepath.split("/").slice(-1)[0];
+            const data = this.fitsManager.imageData.get(fileName);
             if (data === undefined) {
                 console.warn(`Missing fits file: ${fileName}`);
                 continue;
             }
 
+            const material = this.sprites.children[i].material;
 
-            const drawImage = colorData => {
-                const imgData = new ImageData(
-                    colorData, data.width, data.height
-                );
-
-                const canvas = document.createElement("canvas");
-                canvas.width = data.width;
-                canvas.height = data.height;
-                var context = canvas.getContext("2d");
-
-                context.putImageData(imgData, 0, 0);
-
-                const size = data.width * parseFloat(document.getElementById("mapScalingFactor").value);
-
-                const map = new THREE.CanvasTexture(canvas);
-                map.center = new THREE.Vector2(0.5, 0.5);
-
-                const material = new THREE.PointsMaterial({
-                    size: size,
-                    //color: new THREE.Color().setRGB(Math.random(), Math.random, Math.random()),
-                    map: map,
-                    blending: THREE.NormalBlending,
-                    depthTest: false,
-                    transparent: true,
-                    sizeAttenuation: true
-                });
+            const drawFromData = colorData => {
                 material.canvasSize = data.width;
+                const size = material.canvasSize * parseFloat(document.getElementById("mapScalingFactor").value);
 
-                const particle = new THREE.Points(geometry, material);
-
-                this.particleMap.set(particle, r);
-
-                this.sprites.add(particle);
+                drawImage(colorData, data, size, material);
                 this.render();
             }
 
@@ -167,24 +185,29 @@ class SpriteView {
             // to avoid locking the browser
             if (i % 10 === 0) {
                 // Wait for data to load, then draw
-                const colorData = await fitsManager.colorFromData(
-                    data, "viridis", true
+                const colorData = await this.fitsManager.colorFromData(
+                    data, colorScale, true
                 );
-                drawImage(colorData);
+                drawFromData(colorData);
+
             } else {
                 // Draw when data has loaded (asynchronously)
-                fitsManager.colorFromData(
-                    data, "viridis", true
-                ).then(drawImage);
+                this.fitsManager.colorFromData(
+                    data, colorScale, true
+                ).then(drawFromData);
             }
         }
+        this.render();
+
         progress.hidden = true;
     }
 
 
     onClick(event) {
         if (this.selectedObject) {
-            this.selectedObject.material.color.set('#ffffff');
+            this.selectedObject.material.color.copy(
+                this.selectedObject.material.clusterColor
+            );
             this.selectedObject = null;
         }
 
@@ -203,7 +226,6 @@ class SpriteView {
         const intersects = raycaster.intersectObject(this.sprites, true);
 
         if (intersects.length > 0) {
-            //const res = getClosestOpaque(intersects);
             const intersectedPositions = intersects.map(r=>{
                 const p = r.object.geometry.getAttribute("position").array;
                 return new THREE.Vector2(p[0], p[1]);
@@ -238,6 +260,26 @@ class SpriteView {
     render() {
         this.renderer.render(this.scene, this.camera);
     }
+}
+
+
+function drawImage(colorData, data, size, material) {
+    const imgData = new ImageData(
+        colorData, data.width, data.height
+    );
+
+    const canvas = document.createElement("canvas");
+    canvas.width = data.width;
+    canvas.height = data.height;
+    var context = canvas.getContext("2d");
+
+    context.putImageData(imgData, 0, 0);
+
+    const map = new THREE.CanvasTexture(canvas);
+    map.center = new THREE.Vector2(0.5, 0.5);
+
+    material.map = map;
+    material.size = size;
 }
 
 export {SpriteView}

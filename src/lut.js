@@ -169,7 +169,7 @@ class Lut {
      */
     setColorMap(colormap, count = 32) {
 
-        this.map = ColorMapKeywords[colormap] || ColorMapKeywords.grayscale;
+        this.map = colorMapKeywords[colormap] || colorMapKeywords.grayscale;
         this.n = count;
 
         const step = 1.0 / this.n;
@@ -262,7 +262,7 @@ class Lut {
      */
     addColorMap(name, arrayOfColors) {
 
-        ColorMapKeywords[name] = arrayOfColors;
+        colorMapKeywords[name] = arrayOfColors;
 
         return this;
 
@@ -344,7 +344,7 @@ class Lut {
 
 }
 
-const ColorMapKeywords = {
+const colorMapKeywords = {
     "viridis":	[[0.0, 0x440154], [0.25, 0x414487], [0.5, 0x2a788e], [0.75, 0x22a884],  [1.0, 0x7ad151]],
     'GnBu': [[0.0, 0xf0f9e8],[0.25, 0xbae4bc],[0.5, 0x7bccc4],[0.75, 0x43a2ca],[1.0, 0x0868ac]],
     'PuRd': [[0.0, 0xf1eef6],[0.25, 0xd7b5d8],[0.5, 0xdf65b0],[0.75, 0xdd1c77],[1.0, 0x980043]],
@@ -352,4 +352,11 @@ const ColorMapKeywords = {
     'grayscale': [[0.0, 0x000000],[1.0, 0xFFFFFF]]
 };
 
-export {Color, Lut, ColorMapKeywords};
+// Color brewer 12-class Set3
+const colorClasses = [
+    0x8dd3c7, 0xffffb3, 0xbebada, 0xfb8072,
+    0x80b1d3, 0xfdb462, 0xb3de69, 0xfccde5,
+    0xd9d9d9, 0xbc80bd, 0xccebc5, 0xffed6f
+];
+
+export {Color, Lut, colorMapKeywords, colorClasses};

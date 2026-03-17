@@ -41,12 +41,23 @@ class FitsManager {
         this.currentDrawers = new Set();
     }
 
+    /**
+     *
+     * @param {File[]} files
+     */
     readFiles(files) {
         for (const file of files) {
             this.imageData.set(file.name, new FitsData(file));
         }
     }
 
+    /**
+     *
+     * @param {FitsData} data
+     * @param {string} colorScheme
+     * @param {boolean} transparent
+     * @returns
+     */
     async colorFromData(data, colorScheme="viridis", transparent=false) {
         if (!data.values) {
             // Only read fits files when we need to,

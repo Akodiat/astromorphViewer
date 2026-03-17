@@ -13,17 +13,9 @@ function displayImageAndData(datapoint, fitsManager) {
         <tr><td>UMAP y</td><td>${datapoint['umap_y']}</td></tr>
         <tr><td>filename</td><td>${fileName}</td></tr>
     `
+
+    document.getElementById("selectionInfo").open = true;
 }
 
-function getImageData(image) {
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
-    let {width: w, height: h} = image;
-    canvas.width = w;
-    canvas.height = h;
-    context.drawImage(image, 0, 0, w, h);
-    const imageData = context.getImageData(0, 0, w, h);
-    return imageData;
-}
 
 export {displayImageAndData};
