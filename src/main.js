@@ -23,6 +23,7 @@ function init() {
 
     const fitsManager = new FitsManager();
     let spriteView;
+    let data;
 
     // Flags to make sure all data is loaded before we draw any sprites
     let csvLoaded = false;
@@ -39,7 +40,7 @@ function init() {
     });
 
     csvInput.addEventListener("change", async () => {
-        const data = await loadCSVFile(csvInput.files[0]);
+        data = await loadCSVFile(csvInput.files[0]);
         await calcUMAP(data, seedInput.value);
         spriteView = new SpriteView(spriteCanvas, data, fitsManager);
         if (fitsLoaded) {
@@ -48,6 +49,13 @@ function init() {
             inputData.open = false;
         }
         csvLoaded = true;
+    });
+
+    seedInput.addEventListener("change", async () => {
+        if (csvLoaded) {
+            await calcUMAP(data, seedInput.value);
+            spriteView.updateUmapPositions(data);
+        }
     });
 }
 

@@ -109,6 +109,24 @@ class SpriteView {
         });
     }
 
+    updateUmapPositions(newUmap) {
+        this.umapResults = newUmap;
+        for (let i=0; i<newUmap.length; i++) {
+            const r = this.umapResults[i];
+            const geometry = this.sprites.children[i].geometry;
+            const vertices = [];
+            vertices.push(
+                r.umap_x,
+                r.umap_y,
+                r.umap_z ?? 0
+            );
+            const posAttr = new THREE.Float32BufferAttribute(vertices, 3);
+            geometry.setAttribute('position', posAttr);
+            posAttr.needsUpdate = true;
+        }
+        this.render();
+    }
+
     initSpritesFromUmap() {
         this.sprites = new THREE.Group();
         this.scene.add(this.sprites);
