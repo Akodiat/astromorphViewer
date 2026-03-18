@@ -289,6 +289,7 @@ class SpriteView {
                     this.controls.target = targetPos;
                 }
                 this.camera.lookAt(this.controls.target);
+                this.render();
                 if (steps > 1) {
                     requestAnimationFrame(() => {
                         smoothTargetUpdate(targetPos, steps - 1);
