@@ -104,6 +104,10 @@ class SpriteView {
             }
         });
 
+        canvas.addEventListener('pointermove', event => {
+            this.onHover(event)
+        });
+
         this.initSpritesFromUmap();
 
         const mapScalingFactor = document.getElementById("mapScalingFactor");
@@ -253,15 +257,7 @@ class SpriteView {
         progress.hidden = true;
     }
 
-
-    onClick(event) {
-        if (this.selectedObject) {
-            this.selectedObject.material.color.copy(
-                this.selectedObject.material.clusterColor
-            );
-            this.selectedObject = null;
-        }
-
+    mouseInterects(event) {
         pointer.x = (event.clientX / this.canvas.width) * 2 - 1;
         pointer.y = - (event.clientY / this.canvas.height) * 2 + 1;
 
@@ -272,31 +268,73 @@ class SpriteView {
         if (intersects.length > 0) {
             intersects.sort((a,b)=>a.distanceToRay - b.distanceToRay);
 
-            this.selectedObject = intersects[0].object;
-            this.selectedObject.material.color.set('#00a6ff');
-
-            const smoothTargetUpdate = (targetPos, steps = 20) => {
-                if (steps > 1) {
-                    this.controls.target.lerp(targetPos, 1 / steps);
-                }
-                else {
-                    this.controls.target = targetPos;
-                }
-                this.camera.lookAt(this.controls.target);
-                this.render();
-                if (steps > 1) {
-                    requestAnimationFrame(() => {
-                        smoothTargetUpdate(targetPos, steps - 1);
-                    });
-                }
-            }
-            smoothTargetUpdate(intersects[0].point);
-
-            displayImageAndData(
-                this.particleMap.get(this.selectedObject),
-                this.fitsManager
-            );
+            return intersects[0];
         }
+
+        return null
+    }
+
+    onHover(event) {
+        if (this.hoveredObject) {
+            this.hoveredObject.material.color.copy(
+                this.hoveredObject.material.clusterColor
+            );
+            this.hoveredObject = null;
+        }
+        const intersect = this.mouseInterects(event);
+        if (!intersect) {
+            this.canvas.style.cursor = "auto";
+            return;
+        }
+
+        this.canvas.style.cursor = "pointer";
+
+        this.hoveredObject = intersect.object;
+        this.hoveredObject.material.color.set('#50c1fe');
+        this.render();
+    }
+
+
+    onClick(event) {
+        if (this.selectedObject) {
+            this.selectedObject.material.color.copy(
+                this.selectedObject.material.clusterColor
+            );
+            this.selectedObject = null;
+        }
+
+        const intersect = this.mouseInterects(event);
+        if (!intersect) {
+            return;
+        }
+        this.selectedObject = intersect.object;
+
+        console.log(intersect.distanceToRay)
+
+        this.selectedObject.material.color.set('#00a6ff');
+
+        const smoothTargetUpdate = (targetPos, steps = 20) => {
+            if (steps > 1) {
+                this.controls.target.lerp(targetPos, 1 / steps);
+            }
+            else {
+                this.controls.target = targetPos;
+            }
+            this.camera.lookAt(this.controls.target);
+            this.render();
+            if (steps > 1) {
+                requestAnimationFrame(() => {
+                    smoothTargetUpdate(targetPos, steps - 1);
+                });
+            }
+        }
+        smoothTargetUpdate(intersect.point);
+
+        displayImageAndData(
+            this.particleMap.get(this.selectedObject),
+            this.fitsManager
+        );
+
         this.render();
     }
 
