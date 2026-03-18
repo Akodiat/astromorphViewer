@@ -1,7 +1,7 @@
-function displayImageAndData(datapoint, fitsManager) {
+function displayImageAndData(datapoint, fitsManager, colorScheme="viridis") {
     console.log(datapoint.filepath);
     const fileName = datapoint.filepath.split("/").slice(-1)[0];
-    fitsManager.drawImage(fileName);
+    fitsManager.drawImage(fileName, colorScheme);
 
     document.getElementById("textData").innerHTML = `
         <tr><td>cluster</td><td>${datapoint['cluster']}</td></tr>

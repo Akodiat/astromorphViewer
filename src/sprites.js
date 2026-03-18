@@ -120,6 +120,18 @@ class SpriteView {
             }
             this.render();
         });
+
+        const colorScheme = document.getElementById("colorScheme");
+        colorScheme.addEventListener("change", () => {
+            if (!this.selectedObject) {
+                return;
+            }
+            displayImageAndData(
+                this.particleMap.get(this.selectedObject),
+                this.fitsManager,
+                colorScheme.value
+            );
+        })
     }
 
     setDimensionality(nDim) {
@@ -330,9 +342,12 @@ class SpriteView {
         }
         smoothTargetUpdate(intersect.point);
 
+        const colorScheme = document.getElementById("colorScheme").value;
+
         displayImageAndData(
             this.particleMap.get(this.selectedObject),
-            this.fitsManager
+            this.fitsManager,
+            colorScheme
         );
 
         this.render();
