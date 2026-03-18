@@ -76,11 +76,11 @@ class SpriteView {
         //
 
         window.addEventListener('resize', ()=> {
-            this.canvas.width = window.innerWidth;
-            this.canvas.height = window.innerHeight;
-            this.camera.aspect = this.canvas.width / this.canvas.height;
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            this.camera.aspect = canvas.width / canvas.height;
             this.camera.updateProjectionMatrix();
-            this.renderer.setSize(this.canvas.width, this.canvas.height);
+            this.renderer.setSize(canvas.width, canvas.height);
             this.render();
         });
 
@@ -90,12 +90,12 @@ class SpriteView {
 
         const delta = 6;
         const startPos = new THREE.Vector2();
-        document.addEventListener('pointerdown', event => {
+        canvas.addEventListener('pointerdown', event => {
             startPos.x = event.pageX;
             startPos.y = event.pageY;
         });
 
-        document.addEventListener('pointerup', event => {
+        canvas.addEventListener('pointerup', event => {
             const dX = Math.abs(event.pageX - startPos.x);
             const dY = Math.abs(event.pageY - startPos.y);
 

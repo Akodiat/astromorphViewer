@@ -1,0 +1,47 @@
+     body {
+        height: 100%;
+        margin: 0;
+        position: fixed;
+      }
+      .contentBox {
+        display: flex;
+        flex-flow: column;
+        height: 100%;
+      }
+      header {
+        flex: 0 1 auto;
+        top: 20px
+      }
+      main {
+        flex: 1 1 auto;
+        max-width: fit-content;
+        overflow: auto;
+        margin: 20px;
+      }
+      footer {
+        flex: 0 1 40px;
+        bottom: 0;
+        position: fixed;
+        margin: 10px;
+      }
+      #spriteCanvas {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        z-index: 1;
+      }
+
+      #textData {
+        width: max-content;
+      }
+
+      .clickable {
+        z-index: 2;
+        position: relative;
+      }
+
+      td {
+        word-wrap:break-word;
+        max-width: 400px;
+      }
