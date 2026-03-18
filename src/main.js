@@ -6,25 +6,25 @@ import {SpriteView} from "./sprites.js";
 
 init();
 
-
-
-
 function init() {
+    // Setup DOM element references
     const fitsInput = document.getElementById("fitsInput");
     const csvInput = document.getElementById("csvInput");
     const seedInput = document.getElementById("seed");
-    const spriteCanvas = document.getElementById("spriteCanvas");
-
-    const viewOptions = document.getElementById("viewOptions");
     const inputData = document.getElementById("inputData");
 
+    const spriteCanvas = document.getElementById("spriteCanvas");
+    const viewOptions = document.getElementById("viewOptions");
+
+    // Use random seed if none is provided
     if (seedInput.value == "") {
         seedInput.value = Math.round(Math.random() * 1000);
     }
 
     const fitsManager = new FitsManager();
-
     let spriteView;
+
+    // Flags to make sure all data is loaded before we draw any sprites
     let csvLoaded = false;
     let fitsLoaded = false;
 
@@ -39,8 +39,9 @@ function init() {
     });
 
     csvInput.addEventListener("change", async () => {
-        const results = await handleCSVData(csvInput.files[0], seedInput.value);
-        spriteView = new SpriteView(spriteCanvas, results, fitsManager);
+        const data = await loadCSVFile(csvInput.files[0]);
+        await calcUMAP(data, seedInput.value);
+        spriteView = new SpriteView(spriteCanvas, data, fitsManager);
         if (fitsLoaded) {
             spriteView.spriteImagesFromFits();
             viewOptions.hidden = false;
@@ -50,14 +51,17 @@ function init() {
     });
 }
 
-async function handleCSVData(file, seed) {
+/**
+ * Calculate UMAP and append results to data
+ * @param {Object[]} data
+ * @param {number | string} seed Seed to random number generator
+ * @returns
+ */
+async function calcUMAP(data, seed=undefined) {
     const progress = document.getElementById("umapProgress");
     progress.hidden = false;
 
-    const results = await loadCSVFile(file);
-    console.log(results);
-
-    const data = results.map(row => row.emb_dim);
+    const embeddings = data.map(row => row.emb_dim);
 
     const prng = aleaPRNG(seed);
     const umap = new UMAP({
@@ -65,21 +69,20 @@ async function handleCSVData(file, seed) {
         nComponents: 2
     });
 
-    const nEpochs = umap.initializeFit(data);
+    const nEpochs = umap.initializeFit(embeddings);
     progress.max = nEpochs;
-    const embedding = await umap.fitAsync(data, epochNumber => {
-        // check progress and give user feedback, or return `false` to stop
-        progress.value = epochNumber
+    const umapResult = await umap.fitAsync(embeddings, epochNumber => {
+        progress.value = epochNumber;
     });
     progress.hidden = true;
 
-    for (let i=0; i<results.length; i++) {
-        results[i].umap_x = embedding[i][0];
-        results[i].umap_y = embedding[i][1];
-        results[i].umap_z = embedding[i][2];
+    for (let i=0; i<data.length; i++) {
+        data[i].umap_x = umapResult[i][0];
+        data[i].umap_y = umapResult[i][1];
+        data[i].umap_z = umapResult[i][2];
     }
 
     document.getElementById("selectionInfo").hidden = false;
 
-    return results;
+    return data;
 }
