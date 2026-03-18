@@ -15,6 +15,9 @@ function init() {
 
     const spriteCanvas = document.getElementById("spriteCanvas");
     const viewOptions = document.getElementById("viewOptions");
+    const umapDimensions = () => parseInt(document.querySelector(
+        'input[name="umapDimensions"]:checked'
+    ).value);
 
     // Use random seed if none is provided
     if (seedInput.value == "") {
@@ -41,8 +44,8 @@ function init() {
 
     csvInput.addEventListener("change", async () => {
         data = await loadCSVFile(csvInput.files[0]);
-        await calcUMAP(data, seedInput.value);
-        spriteView = new SpriteView(spriteCanvas, data, fitsManager);
+        await calcUMAP(data, seedInput.value, umapDimensions());
+        spriteView = new SpriteView(spriteCanvas, data, fitsManager, umapDimensions());
         if (fitsLoaded) {
             spriteView.spriteImagesFromFits();
             viewOptions.hidden = false;
@@ -53,9 +56,20 @@ function init() {
 
     seedInput.addEventListener("change", async () => {
         if (csvLoaded) {
-            await calcUMAP(data, seedInput.value);
+            await calcUMAP(data, seedInput.value, umapDimensions());
             spriteView.updateUmapPositions(data);
         }
+    });
+
+    document.querySelectorAll('input[name="umapDimensions"]').forEach(el => {
+        el.addEventListener("change", async ()=>{
+            if (csvLoaded) {
+                const nDim = umapDimensions();
+                await calcUMAP(data, seedInput.value, nDim);
+                spriteView.updateUmapPositions(data);
+                spriteView.setDimensionality(nDim);
+            }
+        })
     });
 }
 
@@ -65,7 +79,8 @@ function init() {
  * @param {number | string} seed Seed to random number generator
  * @returns
  */
-async function calcUMAP(data, seed=undefined) {
+async function calcUMAP(data, seed=undefined, nDim=3) {
+
     const progress = document.getElementById("umapProgress");
     progress.hidden = false;
 
@@ -74,7 +89,7 @@ async function calcUMAP(data, seed=undefined) {
     const prng = aleaPRNG(seed);
     const umap = new UMAP({
         random: prng,
-        nComponents: 2
+        nComponents: nDim
     });
 
     const nEpochs = umap.initializeFit(embeddings);

@@ -51,6 +51,8 @@
         <summary>Input data</summary>
         <article>
           <div class="grid">
+
+
             <label>
               Random seed
               <input type="number" id="seed" aria-label="Random seed">
@@ -58,6 +60,7 @@
                 Input a seed to get reproducable UMAP results
               </small>
             </label>
+
             <label>
               Input CSV file
               <input type="file" id="csvInput" accept=".csv" aria-describedby="csvInputHelper">
@@ -74,6 +77,18 @@
                 Select all fits files referenced by the csv file
               </small>
             </label>
+
+            <fieldset>
+              <legend>UMAP dimensions</legend>
+              <label>
+                <input type="radio" value="2" name="umapDimensions" checked/>
+                2D
+              </label>
+              <label>
+                <input type="radio" value="3" name="umapDimensions"/>
+                3D
+              </label>
+            </fieldset>
           </div>
         </article>
       </details>

@@ -16,7 +16,7 @@ const defaultMap = new THREE.TextureLoader().load(
 );
 
 class SpriteView {
-    constructor(canvas, umapResults, fitsManager) {
+    constructor(canvas, umapResults, fitsManager, nDim) {
         this.fitsManager = fitsManager;
         this.umapResults = umapResults;
 
@@ -29,7 +29,7 @@ class SpriteView {
             canvas.width / 2,
             canvas.height / 2,
             canvas.height / - 2,
-            0.1, 20
+            0.1, 1000
         );
 
         let xmin = Infinity;
@@ -52,22 +52,14 @@ class SpriteView {
             this.camera.zoom = canvas.width / (xmax-xmin);
         }
 
-        this.camera.position.set(0, 0, 10);
-        //this.camera.zoom = 50;
+        this.camera.position.set(0, 0, 100);
         this.camera.updateProjectionMatrix();
 
         this.scene = new THREE.Scene();
 
         this.controls = new OrbitControls(this.camera, canvas);
 
-        this.controls.enableRotate = false;
-        this.controls.mouseButtons = {
-            LEFT: THREE.MOUSE.PAN
-        };
-        this.controls.touches = {
-            ONE: THREE.TOUCH.PAN,
-	        TWO: THREE.TOUCH.DOLLY_PAN
-        }
+        this.setDimensionality(nDim);
 
         // Render whenever camera is moved
         this.controls.addEventListener("change", ()=>this.render());
@@ -93,7 +85,25 @@ class SpriteView {
             this.render();
         });
 
-        canvas.addEventListener("click", event => this.onClick(event));
+        // Cannot just listen to "click", because then dragging events
+        // would also trigger. So check if mouse has moved significantly
+        // during the click.
+
+        const delta = 6;
+        const startPos = new THREE.Vector2();
+        document.addEventListener('pointerdown', event => {
+            startPos.x = event.pageX;
+            startPos.y = event.pageY;
+        });
+
+        document.addEventListener('pointerup', event => {
+            const dX = Math.abs(event.pageX - startPos.x);
+            const dY = Math.abs(event.pageY - startPos.y);
+
+            if (dX < delta && dY < delta) {
+                this.onClick(event);
+            }
+        });
 
         this.initSpritesFromUmap();
 
@@ -107,6 +117,30 @@ class SpriteView {
             }
             this.render();
         });
+    }
+
+    setDimensionality(nDim) {
+        if (nDim === 2) {
+            this.controls.enableRotate = false;
+            this.controls.mouseButtons = {
+                LEFT: THREE.MOUSE.PAN
+            };
+            this.controls.touches = {
+                ONE: THREE.TOUCH.PAN,
+                TWO: THREE.TOUCH.DOLLY_PAN
+            }
+        } else {
+            this.controls.enableRotate = true;
+            this.controls.mouseButtons = {
+                LEFT: THREE.MOUSE.ROTATE,
+                MIDDLE: THREE.MOUSE.DOLLY,
+                RIGHT: THREE.MOUSE.PAN
+            };
+            this.controls.touches = {
+                ONE: THREE.TOUCH.ROTATE,
+                TWO: THREE.TOUCH.DOLLY_PAN
+            }
+        }
     }
 
     updateUmapPositions(newUmap) {
@@ -229,43 +263,39 @@ class SpriteView {
             this.selectedObject = null;
         }
 
-        // Calculate mouse position
-        //const rect = this.canvas.getBoundingClientRect()
-        //pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-        //pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+        // pointer.x = (event.offsetX / this.canvas.width) * 2 - 1;
+        // pointer.y = -(event.offsetY / this.canvas.height) * 2 + 1;
 
-        pointer.x = (event.offsetX / this.canvas.width) * 2 - 1;
-        pointer.y = -(event.offsetY / this.canvas.height) * 2 + 1;
-
-        console.log(`x = ${pointer.x}, y=${pointer.y}`);
+        pointer.x = (event.clientX / this.canvas.width) * 2 - 1;
+        pointer.y = - (event.clientY / this.canvas.height) * 2 + 1;
 
         raycaster.setFromCamera(pointer, this.camera);
 
         const intersects = raycaster.intersectObject(this.sprites, true);
 
         if (intersects.length > 0) {
-            const intersectedPositions = intersects.map(r=>{
-                const p = r.object.geometry.getAttribute("position").array;
-                return new THREE.Vector2(p[0], p[1]);
-            });
+            intersects.sort((a,b)=>a.distanceToRay - b.distanceToRay);
 
-            const target = new THREE.Vector2(
-                raycaster.ray.origin.x,
-                raycaster.ray.origin.y,
-            );
+            this.selectedObject = intersects[0].object;
+            this.selectedObject.material.color.set('#00a6ff');
 
-            let closest;
-            let minDistSq = Infinity;
-            for (let i=0, l=intersectedPositions.length; i<l; i++) {
-                const distSq = intersectedPositions[i].distanceToSquared(target);
-                if (distSq < minDistSq) {
-                    closest = intersects[i];
-                    minDistSq = distSq;
+            //this.controls.target.copy(intersects[0].point);
+
+            const smoothTargetUpdate = (targetPos, steps = 20) => {
+                if (steps > 1) {
+                    this.controls.target.lerp(targetPos, 1 / steps);
+                }
+                else {
+                    this.controls.target = targetPos;
+                }
+                this.camera.lookAt(this.controls.target);
+                if (steps > 1) {
+                    requestAnimationFrame(() => {
+                        smoothTargetUpdate(targetPos, steps - 1);
+                    });
                 }
             }
-
-            this.selectedObject = closest.object;
-            this.selectedObject.material.color.set('#00a6ff');
+            smoothTargetUpdate(intersects[0].point);
 
             displayImageAndData(
                 this.particleMap.get(this.selectedObject),
