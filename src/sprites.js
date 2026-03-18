@@ -23,7 +23,6 @@ class SpriteView {
         this.canvas = canvas;
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
-        //this.camera = new THREE.PerspectiveCamera(75, canvas.width / canvas.height, 0.11, 20);
         this.camera = new THREE.OrthographicCamera(
             canvas.width / - 2,
             canvas.width / 2,
@@ -263,9 +262,6 @@ class SpriteView {
             this.selectedObject = null;
         }
 
-        // pointer.x = (event.offsetX / this.canvas.width) * 2 - 1;
-        // pointer.y = -(event.offsetY / this.canvas.height) * 2 + 1;
-
         pointer.x = (event.clientX / this.canvas.width) * 2 - 1;
         pointer.y = - (event.clientY / this.canvas.height) * 2 + 1;
 
@@ -278,8 +274,6 @@ class SpriteView {
 
             this.selectedObject = intersects[0].object;
             this.selectedObject.material.color.set('#00a6ff');
-
-            //this.controls.target.copy(intersects[0].point);
 
             const smoothTargetUpdate = (targetPos, steps = 20) => {
                 if (steps > 1) {
